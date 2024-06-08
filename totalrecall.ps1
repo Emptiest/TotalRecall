@@ -9,22 +9,22 @@ function totalrecall{
 
         This very simple tool extracts and displays data from the Recall feature in Windows 11, providing an easy way to access information about your PC's activity snapshots.
 
-    .PARAMETER fromDate
+    .PARAMETER FromDate
         The start date in YYYY-MM-DD format.
 
-    .PARAMETER toDate
+    .PARAMETER ToDate
         The end date in YYYY-MM-DD format.
 
-    .PARAMETER search
+    .PARAMETER Search
         Search term for text recognition data.
 
     .EXAMPLE
-        PS>
+        PS> totalrecall
 
         Example of how to use this cmdlet
 
     .EXAMPLE
-        PS>
+        PS> totalrecall 
 
         Another example of how to use this cmdlet
 
@@ -46,9 +46,9 @@ function totalrecall{
     [CmdletBinding()]
 
     param(
-        [datetime] $fromDate,
-        [datetime] $toDate,
-        [string] $search
+        [datetime]  $FromDate,
+        [datetime]  $ToDate,
+        [string]    $Search
     )
 
     BEGIN{
@@ -76,7 +76,15 @@ ___________     __         .__ __________                     .__  .__
                 "/C",
                 "/Q"
             }
-            Start-Process -FilePath "icacls" -ArgumentList $icaclsArgs -PassThru | Wait-Process
+            try {
+                Start-Process -FilePath "icacls" -ArgumentList $icaclsArgs -PassThru | Wait-Process
+                Write-Host "✅ Permissions modified for $BasePath and all its subdirectories and files" -ForegroundColor Green
+            }
+            catch {
+                Write-Host "❌ Failed to modify permissions for $BasePath" -ForegroundColor Red
+                Write-Host $_
+            }
+            
             foreach($folder in (Get-ChildItem -Path $BasePath -Directory)){
                 $FolderPath = $BasePath + $folder
                 if(Test-Path $FolderPath){
@@ -99,7 +107,23 @@ ___________     __         .__ __________                     .__  .__
         $DBPath = $GuidFolder + "ukg.db"
         $ImageStorePath = $GuidFolder + "ImageStore"
 
-        # Done down to line 75
+        if(-not (Test-Path $DBPath) -and (Test-Path $ImageStorePath)){
+            Write-Host "🚫 Windows Recall feature not found. Nothing to extract."
+            return
+        }
+
+        $Proceed = (Read-Host -Prompt "🟢 Windows Recall feature found. Do you want to proceed with the extraction? (yes/no)").Trim().ToLower()
+        if($Proceed -ne "yes"){
+            Write-Host "⚠️ Extraction aborted."
+            return
+        }
+
+        $timestamp = Get-Date -Format "yyyy-MM-dd-HH-mm"
+        $ExtractionFolderPath = "$($PWD)\$($timestamp)_Recall_Extraction"
+        $ExtractionFolder = New-Item -Path $ExtractionFolderPath -ItemType Directory -ErrorAction SilentlyContinue
+        Write-Host "📂 Creating extraction folder: $ExtractionFolderPath"
+        
+        # Done down to line 78
         Write-Host "This script is still WIP, nothing has been done yet!"
     }
 
