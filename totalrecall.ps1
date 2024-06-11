@@ -64,9 +64,11 @@ ___________     __         .__ __________                     .__  .__
                          "
         Write-Host $Banner
         Write-Host "v$Version / Alexander Hagenah / @xaitax / ah@primepage.de"
+        Write-Host "PowerShell rewrite by Fullest (https://github.com/Emptiest)"
     }
 
     PROCESS{
+        throw "This script is not ready for use yet."
         if(Test-Path $BasePath){
             $icaclsArgs = {
                 "$BasePath",
@@ -123,12 +125,11 @@ ___________     __         .__ __________                     .__  .__
         $ExtractionFolder = New-Item -Path $ExtractionFolderPath -ItemType Directory -ErrorAction SilentlyContinue
         Write-Host "📂 Creating extraction folder: $ExtractionFolderPath"
         
+        
+    }
+
+    END{
         # Done down to line 78
         Write-Host "This script is still WIP, nothing has been done yet!"
     }
-
-    END{}
 }
-
-
-
