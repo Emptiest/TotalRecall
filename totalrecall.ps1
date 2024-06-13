@@ -1,3 +1,36 @@
+function Export-RecallFolder{
+
+    [CmdletBinding()]
+
+    param(
+        [Parameter()]
+        [PSObject] $ParameterName
+    )
+
+    BEGIN{
+        $timestamp = Get-Date -Format "yyyy-MM-dd-HH-mm"
+        $ExtractionFolderPath = "$($PWD)\$($timestamp)_Recall_Extraction"
+    }
+
+    PROCESS{
+        
+        $ExtractionFolder = New-Item -Path $ExtractionFolderPath -ItemType Directory -ErrorAction SilentlyContinue
+        Write-Host "📂 Creating extraction folder: $ExtractionFolderPath"
+        
+        Copy-Item -Path $DBPath -Destination $ExtractionFolderPath -Force
+        Copy-Item -Path $ImageStorePath -Destination $ExtractionFolderPath -Recurse -Force
+
+        foreach($ImageFile in (Get-ChildItem -Path $ImageStorePath)){
+            if([IO.Path]::GetExtension($ImageFile) -ne ".jpg"){
+                Rename-Item -Path $ImageFile -NewName $($ImageFile + ".jpg")
+                Write-Verbose "$ImageFile was renamed to $ImageFile.jpg"
+            }
+        }
+    }
+
+    END{}
+}
+
 function totalrecall{
 
     <#
@@ -80,56 +113,58 @@ ___________     __         .__ __________                     .__  .__
             }
             try {
                 Start-Process -FilePath "icacls" -ArgumentList $icaclsArgs -PassThru | Wait-Process
-                Write-Host "✅ Permissions modified for $BasePath and all its subdirectories and files" -ForegroundColor Green
+                Write-Host "Permissions modified for $BasePath and all its subdirectories and files" -ForegroundColor Green
             }
             catch {
-                Write-Host "❌ Failed to modify permissions for $BasePath" -ForegroundColor Red
+                Write-Host "Failed to modify permissions for $BasePath" -ForegroundColor Red
                 Write-Host $_
             }
             
             foreach($folder in (Get-ChildItem -Path $BasePath -Directory)){
-                $FolderPath = $BasePath + $folder
+                $FolderPath = $BasePath + "\" + $folder
+                Write-Verbose "Testing folder path $FolderPath"
                 if(Test-Path $FolderPath){
                     $GuidFolder = $FolderPath
                     break
                 }
             }
         }else{
-            Write-Host "🚫 Base path does not exist."
+            Write-Host "Base path does not exist." -ForegroundColor Red
             return
         }
 
         if(-not $GuidFolder){
-            Write-Host "🚫 Could not find the GUID folder."
+            Write-Host "Could not find the GUID folder." -ForegroundColor Red
             return
         }
 
         Write-Host "📁 Recall folder found: $GuidFolder"
 
-        $DBPath = $GuidFolder + "ukg.db"
-        $ImageStorePath = $GuidFolder + "ImageStore"
+        $DBPath = $GuidFolder + "\" + "ukg.db"
+        $ImageStorePath = $GuidFolder + "\" + "ImageStore"
 
         if(-not (Test-Path $DBPath) -and (Test-Path $ImageStorePath)){
-            Write-Host "🚫 Windows Recall feature not found. Nothing to extract."
+            Write-Host "Windows Recall feature not found. Nothing to extract." -ForegroundColor Red
             return
         }
 
-        $Proceed = (Read-Host -Prompt "🟢 Windows Recall feature found. Do you want to proceed with the extraction? (yes/no)").Trim().ToLower()
+        $Proceed = (Read-Host -Prompt "Windows Recall feature found. Do you want to proceed with the extraction? (yes/no)").Trim().ToLower()
         if($Proceed -ne "yes"){
-            Write-Host "⚠️ Extraction aborted."
+            Write-Host "Extraction aborted." -ForegroundColor Yellow
             return
         }
 
-        $timestamp = Get-Date -Format "yyyy-MM-dd-HH-mm"
-        $ExtractionFolderPath = "$($PWD)\$($timestamp)_Recall_Extraction"
-        $ExtractionFolder = New-Item -Path $ExtractionFolderPath -ItemType Directory -ErrorAction SilentlyContinue
-        Write-Host "📂 Creating extraction folder: $ExtractionFolderPath"
+        Export-RecallFolder
+
+        if(-not (Get-Module -Name PSSQLite)){
+            Install-module PSSQLite
+        }
         
         
     }
 
     END{
-        # Done down to line 78
+        # Done down to line 89
         Write-Host "This script is still WIP, nothing has been done yet!"
     }
 }
