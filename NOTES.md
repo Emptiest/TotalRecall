@@ -14,6 +14,7 @@ Register-PackageSource -Name NuGet -ProviderName NuGet -Location https://www.nug
 Install-Package System.Data.Sqlite.Core -Scope CurrentUser -SkipDependencies
 ```
 
->[!NOTE] `-SkipDependencies` was used to avoid a dependency loop I was running into. It may not be necessary.
+> [!NOTE]
+> `-SkipDependencies` was used to avoid a dependency loop I was running into. It may not be necessary.
 
 I kind of figured out how to do this by following the troubleshooting in [this issue](https://github.com/PowerShell/PowerShell/issues/6050), even if I ended up going with the module instead. Alas, the module does not work on ARM, so I'm turning back. I'll revisit this at a later date when I have more free time.
